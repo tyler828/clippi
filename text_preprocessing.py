@@ -29,12 +29,7 @@ def usage():
     print(usage_string)
 
 # Transcript
-INPUT_FILE = "test1.mp4"
-INPUT_DIR = './input_data'
-OUTPUT_DIR = './cache/' # target output for preoprocessing is cache
-
-root, extention  = os.path.splitext(INPUT_FILE)
-OUTPUT_FILE = OUTPUT_DIR + root + ".json"
+INPUT_DIR = './input_data/'
 
 def get_transcript(input_file, output_file):
     audio = whisper.load_audio(input_file)
@@ -135,24 +130,29 @@ nlp = spacy.load("en_core_web_lg")
 
 # Driver
 def main():
-    mkdir(OUTPUT_DIR) # TODO move this to main driver (clippy.py), should always be setup first
     if (len(sys.argv)) < 2:
         usage()
         exit(1)
 
     INPUT_FILE = sys.argv[1]
+    root, extension  = os.path.splitext(INPUT_FILE)
+    OUTPUT_DIR = './cache/' + root + '/' # target output for preprocessing is cache
+    OUTPUT_FILE = OUTPUT_DIR + root + ".json"
+
+    mkdir(OUTPUT_DIR)  # create sub directory in cache
+    
     print("Processing: " + INPUT_FILE)
 
-    if not os.path.isfile(INPUT_FILE):
+    if not os.path.isfile(INPUT_DIR + INPUT_FILE):
         perror("unable to process input file " + str(INPUT_FILE))
         exit(1)
 
     # Generate transcript if it does not exist in cache
     if not os.path.isfile(OUTPUT_FILE):
         try:
-            transcript = get_transcript(INPUT_FILE, OUTPUT_FILE)
-        except:
-            perror("unable to generate transcript")
+            transcript = get_transcript(INPUT_DIR + INPUT_FILE, OUTPUT_FILE)
+        except Exception as error:
+            perror(f"unable to generate transcript: {error}")
     else: 
         try:
             with open(OUTPUT_FILE, 'r') as f:
@@ -185,6 +185,7 @@ def main():
         perror("unable to create dataset")
         exit(1)
 
+    print(df)
     # Export
     df.to_csv(OUTPUT_DIR + 'out_text_preprocessing.csv', index=False) 
 
